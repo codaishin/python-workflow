@@ -1,25 +1,29 @@
 """Core statemachine module"""
-from typing import Callable, Dict, Generic, Mapping, Optional, Tuple, TypeVar
+from typing import (
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    Mapping,
+    Optional,
+    TypeVar,
+)
 
 from .interfaces import BaseState
 
-TStateValue = TypeVar("TStateValue")
+TVal = TypeVar("TVal")
 
 
-class Node(Generic[TStateValue]):
+class Node(Generic[TVal]):
     """State machine node"""
 
-    def __init__(
-        self,
-        name: str,
-        func: Callable[[], TStateValue],
-    ) -> None:
+    def __init__(self, name: str, func: Callable[[], TVal]) -> None:
         self._name = name
         self._func = func
-        self._next_nodes: Dict[str, "Node[TStateValue]"] = {}
+        self._next_nodes: Dict[str, "Node[TVal]"] = {}
 
     @property
-    def next_nodes(self) -> Mapping[str, "Node[TStateValue]"]:
+    def next_nodes(self) -> Mapping[str, "Node[TVal]"]:
         """Next nodes"""
         return self._next_nodes
 
@@ -28,95 +32,87 @@ class Node(Generic[TStateValue]):
         """Node name"""
         return self._name
 
-    def func(self) -> TStateValue:
+    def func(self) -> TVal:
         """Node function"""
         return self._func()
 
-    def next(
-        self,
-        **transitions: Callable[[TStateValue], TStateValue],
-    ) -> Tuple["Node[TStateValue]", ...]:
+    def next(self, **funcs: Callable[[TVal], TVal]) -> Iterable["Node[TVal]"]:
         """Connect next nodes"""
 
-        return_nodes: Tuple[Node, ...] = ()
-        for name, transition in transitions.items():
-            node = Node(name, self._apply(transition))
-            self._next_nodes[name] = node
-            return_nodes += (node,)
-        return return_nodes
+        def generate() -> Iterable[Node[TVal]]:
+            for name, func in funcs.items():
+                yield self._next(name, func)
 
-    def _apply(
-        self,
-        transtion: Callable[[TStateValue], TStateValue],
-    ) -> Callable[[], TStateValue]:
-        def apply_transtion() -> TStateValue:
-            return transtion(self.func())
+        return tuple(generate())
 
-        return apply_transtion
+    def _next(self, name: str, func: Callable[[TVal], TVal]) -> "Node[TVal]":
+        node = Node(name, self._apply(func))
+        self._next_nodes[name] = node
+        return node
+
+    def _apply(self, wrapper: Callable[[TVal], TVal]) -> Callable[[], TVal]:
+        def apply_func() -> TVal:
+            return wrapper(self.func())
+
+        return apply_func
 
 
-class State(BaseState[TStateValue]):
+class State(BaseState[TVal]):
     """State machine state"""
 
-    def __init__(
-        self,
-        value: TStateValue,
-        nodes: Mapping[str, Node[TStateValue]],
-    ):
+    def __init__(self, value: TVal, nodes: Mapping[str, Node[TVal]]) -> None:
         self._value = value
         self._nodes = nodes
 
     @property
-    def value(self) -> TStateValue:
+    def value(self) -> TVal:
         return self._value
 
-    def transition(self, name: str) -> "BaseState[TStateValue]":
+    def transition(self, name: str) -> "BaseState[TVal]":
         node = self._nodes[name]
         self._value = node.func()
         return State(self._value, node.next_nodes)
 
 
-class StartState(BaseState[TStateValue]):
+class StartState(BaseState[TVal]):
     """Start state"""
 
-    def __init__(
-        self,
-        start_nodes: Mapping[str, Node[TStateValue]],
-    ) -> None:
-        self._value: Optional[TStateValue] = None
+    def __init__(self, start_nodes: Mapping[str, Node[TVal]]) -> None:
+        self._value: Optional[TVal] = None
         self._start_nodes = start_nodes
 
     @property
-    def value(self) -> TStateValue:
+    def value(self) -> TVal:
         assert self._value
         return self._value
 
-    def transition(self, name: str) -> "BaseState[TStateValue]":
+    def transition(self, name: str) -> "BaseState[TVal]":
         node = self._start_nodes[name]
         self._value = node.func()
         return State(self._value, node.next_nodes)
 
 
-class StateMachine(Generic[TStateValue]):
+class StateMachine(Generic[TVal]):
     """State machine"""
 
     def __init__(self) -> None:
-        self._start_nodes: Dict[str, Node[TStateValue]] = {}
+        self._next_nodes: Dict[str, Node[TVal]] = {}
 
-    def start(
-        self,
-        **transitions: Callable[[], TStateValue],
-    ) -> Tuple[Node[TStateValue], ...]:
+    def start(self, **funcs: Callable[[], TVal]) -> Iterable[Node[TVal]]:
         """Connect start nodes"""
 
-        return_nodes: Tuple[Node, ...] = ()
-        for name, transition in transitions.items():
-            start_node = Node(name, transition)
-            self._start_nodes[name] = start_node
-            return_nodes += (start_node,)
-        return return_nodes
+        def generate() -> Iterable[Node[TVal]]:
+            for name, func in funcs.items():
+                yield self._next(name, func)
 
-    def run(self) -> BaseState[TStateValue]:
+        return tuple(generate())
+
+    def _next(self, name: str, func: Callable[[], TVal]) -> "Node[TVal]":
+        node = Node(name, func)
+        self._next_nodes[name] = node
+        return node
+
+    def run(self) -> BaseState[TVal]:
         """Run machine with concrete states"""
 
-        return StartState(self._start_nodes)
+        return StartState(self._next_nodes)

@@ -40,9 +40,9 @@ class Node(Generic[TStateValue]):
 
         return_nodes: Tuple[Node, ...] = ()
         for name, transition in transitions.items():
-            start_node = Node(name, self._apply(transition))
-            self._next_nodes[name] = start_node
-            return_nodes += (start_node,)
+            node = Node(name, self._apply(transition))
+            self._next_nodes[name] = node
+            return_nodes += (node,)
         return return_nodes
 
     def _apply(

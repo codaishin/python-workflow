@@ -28,29 +28,31 @@ class Node(Generic[TStateValue]):
         """Node name"""
         return self._name
 
-    def resolve(self) -> TStateValue:
-        """Resolve node value"""
+    def func(self) -> TStateValue:
+        """Node function"""
         return self._func()
 
     def next(
         self,
-        **nexts: Callable[[TStateValue], TStateValue],
+        **transitions: Callable[[TStateValue], TStateValue],
     ) -> Tuple["Node[TStateValue]", ...]:
         """Connect next nodes"""
 
         return_nodes: Tuple[Node, ...] = ()
-
-        def apply(transition) -> Callable[[], TStateValue]:
-            def apply_transition() -> TStateValue:
-                return transition(self._func())
-
-            return apply_transition
-
-        for name, transition in nexts.items():
-            start_node = Node(name, apply(transition))
+        for name, transition in transitions.items():
+            start_node = Node(name, self._apply(transition))
             self._next_nodes[name] = start_node
             return_nodes += (start_node,)
         return return_nodes
+
+    def _apply(
+        self,
+        transtion: Callable[[TStateValue], TStateValue],
+    ) -> Callable[[], TStateValue]:
+        def apply_transtion() -> TStateValue:
+            return transtion(self.func())
+
+        return apply_transtion
 
 
 class State(BaseState[TStateValue]):
@@ -70,7 +72,7 @@ class State(BaseState[TStateValue]):
 
     def transition(self, name: str) -> "BaseState[TStateValue]":
         node = self._nodes[name]
-        self._value = node.resolve()
+        self._value = node.func()
         return State(self._value, node.next_nodes)
 
 
@@ -91,7 +93,7 @@ class StartState(BaseState[TStateValue]):
 
     def transition(self, name: str) -> "BaseState[TStateValue]":
         node = self._start_nodes[name]
-        self._value = node.resolve()
+        self._value = node.func()
         return State(self._value, node.next_nodes)
 
 
@@ -103,12 +105,12 @@ class StateMachine(Generic[TStateValue]):
 
     def start(
         self,
-        **start_transitions: Callable[[], TStateValue],
+        **transitions: Callable[[], TStateValue],
     ) -> Tuple[Node[TStateValue], ...]:
         """Connect start nodes"""
 
         return_nodes: Tuple[Node, ...] = ()
-        for name, transition in start_transitions.items():
+        for name, transition in transitions.items():
             start_node = Node(name, transition)
             self._start_nodes[name] = start_node
             return_nodes += (start_node,)

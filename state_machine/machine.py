@@ -36,15 +36,8 @@ class Node(Generic[TStateValue]):
         self,
         **nexts: Callable[[TStateValue], TStateValue],
     ) -> Tuple["Node[TStateValue]", ...]:
-        """Connect next nodes
+        """Connect next nodes"""
 
-        Kwargs:
-            (TStateValue) -> TStateValue: Declared node names and
-                transition logic
-
-        Returns:
-            (Node[TStateValue], ...): Newly declared nodes
-        """
         return_nodes: Tuple[Node, ...] = ()
 
         def apply(transition) -> Callable[[], TStateValue]:
@@ -112,14 +105,8 @@ class StateMachine(Generic[TStateValue]):
         self,
         **start_transitions: Callable[[], TStateValue],
     ) -> Tuple[Node[TStateValue], ...]:
-        """Connect start nodes
+        """Connect start nodes"""
 
-        Kwargs:
-            () -> TStateValue: Declared node names and transition logic
-
-        Returns:
-            (Node[TStateValue], ...): Newly declared nodes
-        """
         return_nodes: Tuple[Node, ...] = ()
         for name, transition in start_transitions.items():
             start_node = Node(name, transition)

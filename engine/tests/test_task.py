@@ -2,8 +2,8 @@
 
 from unittest import TestCase
 
-from .exceptions import TaskError
-from .task import Task
+from ..exceptions import TaskError
+from ..task import Task
 
 
 class TestTask(TestCase):

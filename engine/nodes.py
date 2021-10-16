@@ -1,4 +1,5 @@
 """Process nodes"""
+from typing import Iterable, List
 
 
 class Node:
@@ -6,8 +7,18 @@ class Node:
 
     def __init__(self, name: str) -> None:
         self._name = name
+        self._children: List["Node"] = []
 
     @property
     def name(self) -> str:
         """Node name"""
         return self._name
+
+    @property
+    def children(self) -> Iterable["Node"]:
+        """Node children"""
+        return self._children
+
+    def add_child(self, child: "Node") -> None:
+        """Add a child"""
+        self._children.append(child)

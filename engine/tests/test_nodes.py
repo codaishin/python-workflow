@@ -1,58 +1,63 @@
 """tests for nodes.py"""
 from unittest import TestCase
 
+from tools import UnitTests
+
 from ..nodes import Node
 
 
-class TestNode(TestCase):
+class NodeTests(UnitTests):
     """Test Node"""
 
-    def test_name(self) -> None:
-        """has set name"""
 
-        node = Node("my node")
+@NodeTests.describe("node has a name")
+def _(test: TestCase) -> None:
+    node = Node("my node")
 
-        self.assertEqual("my node", node.name)
+    test.assertEqual("my node", node.name)
 
-        node = Node("other node")
+    node = Node("other node")
 
-        self.assertEqual("other node", node.name)
+    test.assertEqual("other node", node.name)
 
-    def test_add_children(self) -> None:
-        """add children to node"""
 
-        fst = Node("1st")
-        snd = Node("2nd")
-        trd = Node("3rd")
+@NodeTests.describe("add children to node")
+def _(test: TestCase) -> None:
+    node = Node("node")
+    fst_child = Node("1st child")
+    snd_child = Node("2nd child")
+    node.add_child(fst_child)
+    node.add_child(snd_child)
 
-        fst.add_child(snd)
-        fst.add_child(trd)
+    test.assertIn(fst_child, node.children)
+    test.assertIn(snd_child, node.children)
 
-        self.assertIn(snd, fst.children)
-        self.assertIn(trd, fst.children)
 
-    def test_serialize_name(self) -> None:
-        """serialize name"""
+@NodeTests.describe("serialize name")
+def _(test: TestCase) -> None:
+    node = Node("foo")
 
-        node = Node("foo")
-        self.assertEqual("foo", node.serialize())
+    test.assertEqual("foo", node.serialize())
 
-        node = Node("bar")
-        self.assertEqual("bar", node.serialize())
+    node = Node("bar")
 
-    def test_serialize_name_and_child_name(self) -> None:
-        """serialize name and child name"""
+    test.assertEqual("bar", node.serialize())
 
-        node = Node("foo")
-        node.add_child(Node("bar"))
-        self.assertEqual("foo,bar", node.serialize())
 
-    def test_serialize_name_and_children_names(self) -> None:
-        """serialize name and children names"""
-        node = Node("node")
-        child_a = Node("childA")
-        child_b = Node("childB")
-        node.add_child(child_a)
-        node.add_child(child_b)
+@NodeTests.describe("serialize name and child name")
+def _(test: TestCase) -> None:
+    node = Node("foo")
+    node.add_child(Node("bar"))
 
-        self.assertEqual("node,childA,-,childB", node.serialize())
+    test.assertEqual("foo,bar", node.serialize())
+
+
+@NodeTests.describe("serialize name and children names")
+def _(test: TestCase) -> None:
+    node = Node("node")
+    fst_child = Node("1st child")
+    snd_child = Node("2nd child")
+    node.add_child(fst_child)
+    node.add_child(snd_child)
+
+    test.assertEqual("node,1st child,-,2nd child", node.serialize())

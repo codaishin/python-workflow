@@ -1,5 +1,4 @@
 """tests for nodes.py"""
-
 from unittest import TestCase
 
 from ..nodes import Node
@@ -31,3 +30,12 @@ class TestNode(TestCase):
 
         self.assertIn(snd, fst.children)
         self.assertIn(trd, fst.children)
+
+    def test_serialize_name(self) -> None:
+        """serialize Node("foo") to "foo" """
+
+        node = Node("foo")
+        self.assertEqual("foo", node.serialize())
+
+        node = Node("bar")
+        self.assertEqual("bar", node.serialize())

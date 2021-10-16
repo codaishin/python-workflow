@@ -22,3 +22,7 @@ class Node:
     def add_child(self, child: "Node") -> None:
         """Add a child"""
         self._children.append(child)
+
+    def serialize(self) -> str:
+        """serialize node and its children as string"""
+        return self.name

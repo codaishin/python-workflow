@@ -25,4 +25,10 @@ class Node:
 
     def serialize(self) -> str:
         """serialize node and its children as string"""
+        if self._children:
+            (child, *rest) = self._children
+            suffix = "," + child.name
+            for child in rest:
+                suffix += ",-," + child.name
+            return self.name + suffix
         return self.name

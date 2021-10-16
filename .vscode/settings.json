@@ -12,6 +12,9 @@
 	"python.linting.pylintCategorySeverity.fatal": "Error",
 	"python.linting.pylintCategorySeverity.refactor": "Error",
 	"python.linting.mypyEnabled": true,
+	"python.linting.mypyArgs": [
+		"----disable-error-code=no-redef",
+	],
 	"python.formatting.provider": "black",
 	"python.formatting.blackArgs": ["--line-length=79"],
 	"[python]": {
